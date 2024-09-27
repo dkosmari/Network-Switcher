@@ -1,0 +1,41 @@
+name: Build Binary
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build-plugin:
+    runs-on: ubuntu-latest
+    name: Build plugin
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        submodules: true
+
+    - name: Setup Docker
+      run: docker build --tag plugin-image .
+
+    - name: Build
+      uses: addnab/docker-run-action@v3
+      with:
+        image: plugin-image
+        options: --name plugin-container
+        run: |
+          ./bootstrap
+          ./configure --host=powerpc-eabi CXXFLAGS="-Os -ffunction-sections -fipa-pta"
+          make
+
+    - name: Copy from container to host
+      uses: tj-actions/docker-cp@v2
+      with:
+        container: plugin-container
+        source: /project/network-switcher.wps
+        destination: network-switcher.wps
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: network-switcher.wps
+        path: "*.wps"
+        if-no-files-found: error
