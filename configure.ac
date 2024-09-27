@@ -4,9 +4,9 @@
 AC_PREREQ([2.69])
 AC_INIT([Network Switcher],
         [0.0],
-        [BUG-REPORT],
+        [https://github.com/dkosmari/Network-Switcher/issues],
         [network-switcher],
-        [URL])
+        [https://github.com/dkosmari/Network-Switcher])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
