@@ -35,7 +35,7 @@ Dependencies:
 
 Steps:
 
-  0. `./bootstrap`
+  0. (Skip if you got the source code from a `.tar.gz` release) `./bootstrap`
 
   1. `./configure --host=powerpc-eabi CXXFLAGS="-Os -ffunction-sections -fipa-pta"`
 
