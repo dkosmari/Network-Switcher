@@ -26,6 +26,7 @@
 #include <wupsxx/logger.hpp>
 
 #include "notify.hpp"
+#include "wut_extras.hpp"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -45,6 +46,7 @@ WUPS_PLUGIN_LICENSE("GPLv3");
 
 
 int startup_id = 1;
+int compat_id = 1;
 
 
 struct nn_ac_guard {
@@ -61,69 +63,6 @@ struct nn_ac_guard {
     }
 
 };
-
-
-// fill-in missing parts of wut
-namespace nn::ac {
-
-    using Config = NetConfCfg;
-
-    namespace detail {
-
-        extern "C" {
-
-            nn::Result
-            CloseAll__Q2_2nn2acFv();
-
-            // nn::Result
-            // Connect__Q2_2nn2acFPC16netconf_profile_(const Config* cfg);
-
-            nn::Result
-            ReadConfig__Q2_2nn2acFQ3_2nn2ac11ConfigIdNumP16netconf_profile_(ConfigIdNum id,
-                                                                            Config* cfg);
-
-            nn::Result
-            IsConfigExisting__Q2_2nn2acFQ3_2nn2ac11ConfigIdNumPb(ConfigIdNum id,
-                                                                 bool* existing);
-
-            nn::Result
-            SetStartupId__Q2_2nn2acFQ3_2nn2ac11ConfigIdNum(ConfigIdNum id);
-
-        }
-
-    } // namespace detail
-
-    nn::Result
-    CloseAll()
-    {
-        return detail::CloseAll__Q2_2nn2acFv();
-    }
-
-    // nn::Result
-    // Connect(const Config* cfg)
-    // {
-    //     return detail::Connect__Q2_2nn2acFPC16netconf_profile_(cfg);
-    // }
-
-    nn::Result
-    ReadConfig(ConfigIdNum id, Config* cfg)
-    {
-        return detail::ReadConfig__Q2_2nn2acFQ3_2nn2ac11ConfigIdNumP16netconf_profile_(id, cfg);
-    }
-
-    nn::Result
-    IsConfigExisting(ConfigIdNum id, bool* existing)
-    {
-        return detail::IsConfigExisting__Q2_2nn2acFQ3_2nn2ac11ConfigIdNumPb(id, existing);
-    }
-
-    nn::Result
-    SetStartupId(ConfigIdNum id)
-    {
-        return detail::SetStartupId__Q2_2nn2acFQ3_2nn2ac11ConfigIdNum(id);
-    }
-
-} // namespace nn::ac
 
 
 std::string

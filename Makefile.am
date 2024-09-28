@@ -32,7 +32,8 @@ noinst_PROGRAMS = network-switcher.elf
 
 network_switcher_elf_SOURCES = \
 	src/main.cpp \
-	src/notify.cpp src/notify.hpp
+	src/notify.cpp src/notify.hpp \
+	src/wut_extras.cpp src/wut_extras.hpp
 
 
 all-local: $(WPS_FILE)
