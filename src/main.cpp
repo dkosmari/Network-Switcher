@@ -6,11 +6,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <algorithm>
 #include <cstdio>
+#include <future>
 #include <memory>
 #include <stdexcept>
+#include <stop_token>
 #include <string>
+#include <utility>
 
 #include <nn/ac.h>
 #include <nsysnet/netconfig.h>
@@ -135,8 +137,11 @@ get_ssid(const NetConfWifiConfigData& cfg)
 
 struct net_profile_item : wups::config::button_item {
 
-    nn::ac::ConfigIdNum id;
+    const nn::ac::ConfigIdNum id;
     std::string description;
+    std::future<void> task_result;
+    std::stop_source task_stopper;
+
 
     net_profile_item(nn::ac::ConfigIdNum id) :
         button_item{"Profile " + std::to_string(id)},
@@ -179,16 +184,59 @@ struct net_profile_item : wups::config::button_item {
     on_started()
         override
     {
+        status_msg = "Connecting...";
+
+        task_stopper = {};
+
+        auto task = [this](std::stop_token token)
+        {
+            try {
+                nn_ac_guard guard;
+
+                if (token.stop_requested())
+                    throw runtime_error{"Canceled by user"};
+
+                nn::ac::CloseAll();
+
+                if (token.stop_requested())
+                    throw runtime_error{"Canceled by user"};
+
+                if (!nn::ac::Connect(id))
+                    throw runtime_error{"Failed to switch to profile " + std::to_string(id)};
+
+                current_state = state::stopped;
+            }
+            catch (std::exception& e) {
+                current_state = state::stopped;
+                throw;
+            }
+        };
+
+        task_result = std::async(std::launch::async,
+                                 std::move(task),
+                                 task_stopper.get_token());
+    }
+
+
+    virtual
+    void
+    on_cancel()
+        override
+    {
+        task_stopper.request_stop();
+    }
+
+
+    virtual
+    void
+    on_finished()
+        override
+    {
         try {
-            nn_ac_guard guard;
-
-            nn::ac::CloseAll();
-
-            if (!nn::ac::Connect(id))
-                throw runtime_error{"Failed to switch to profile " + std::to_string(id)};
-
+            task_result.get();
+            status_msg = "Done! " + description;
             notify::infof("Using profile %u: %s",
-                          id,
+                          static_cast<unsigned>(id),
                           description.c_str());
         }
         catch (std::exception& e) {
@@ -196,7 +244,6 @@ struct net_profile_item : wups::config::button_item {
             logger::printf("Error: %s\n", e.what());
             status_msg = e.what();
         }
-        current_state = state::stopped;
     }
 
 };
