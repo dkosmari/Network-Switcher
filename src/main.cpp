@@ -249,6 +249,39 @@ struct net_profile_item : wups::config::button_item {
 };
 
 
+struct disconnect_item : wups::config::button_item {
+
+    disconnect_item() :
+        button_item{"Disconnect"}
+    {}
+
+
+    static
+    std::unique_ptr<disconnect_item>
+    create()
+    {
+        return std::make_unique<disconnect_item>();
+    }
+
+
+    virtual
+    void
+    on_started()
+        override
+    {
+        nn_ac_guard guard;
+
+        if (nn::ac::CloseAll())
+            status_msg = "Done!";
+        else
+            status_msg = "Error!";
+
+        current_state = state::stopped;
+    }
+
+};
+
+
 void
 menu_open(wups::config::category& root)
 {
@@ -268,6 +301,8 @@ menu_open(wups::config::category& root)
                                             startup_id,
                                             startup_id,
                                             1, 6));
+
+    root.add(disconnect_item::create());
 }
 
 
