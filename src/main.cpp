@@ -45,8 +45,8 @@ WUPS_PLUGIN_AUTHOR("Daniel K. O.");
 WUPS_PLUGIN_LICENSE("GPLv3");
 
 
-int startup_id = 1;
-int compat_id = 1;
+int startup_id = 0;
+int compat_id = 0;
 
 
 struct nn_ac_guard {
@@ -224,6 +224,8 @@ struct disconnect_item : wups::config::button_item {
 void
 menu_open(wups::config::category& root)
 {
+    using wups::config::int_item;
+
     logger::initialize(PACKAGE_NAME);
     notify::initialize(PACKAGE_NAME);
 
@@ -235,11 +237,18 @@ menu_open(wups::config::category& root)
     nn::ac::ConfigIdNum sid = 0;
     if (nn::ac::GetStartupId(&sid))
         startup_id = sid;
+    root.add(int_item::create("Default profile",
+                              startup_id,
+                              startup_id,
+                              1, 6));
 
-    root.add(wups::config::int_item::create("Default profile",
-                                            startup_id,
-                                            startup_id,
-                                            1, 6));
+    nn::ac::ConfigIdNum cid = 0;
+    if (nn::ac::GetCompatId(&cid))
+        compat_id = cid;
+    root.add(int_item::create("vWii profile",
+                              compat_id,
+                              compat_id,
+                              1, 6));
 
     root.add(disconnect_item::create());
 }
@@ -257,6 +266,16 @@ menu_close()
         } else {
             notify::errorf("Could not set default profile to %d", startup_id);
             logger::printf("nn::ac::SetStartupId(%d) failed\n", startup_id);
+        }
+    }
+
+    nn::ac::ConfigIdNum cid = 0;
+    if (nn::ac::GetCompatId(&cid) && static_cast<int>(cid) != compat_id) {
+        if (nn::ac::SetCompatId(compat_id)) {
+            notify::infof("Set vWii profile to %d", compat_id);
+        } else {
+            notify::errorf("Could not set vWii profile to %d", compat_id);
+            logger::printf("nn::ac::SetCompatId(%d) failed\n", compat_id);
         }
     }
 
