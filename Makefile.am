@@ -11,18 +11,12 @@ EXTRA_DIST = \
 SUBDIRS = external/libwupsxx
 
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/external/libwupsxx/include \
-	$(DEVKITPRO_CPPFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/external/libwupsxx/include
 
-AM_CXXFLAGS = \
-	-Wall -Wextra -Werror \
-	$(DEVKITPRO_CXXFLAGS)
 
-AM_LDFLAGS = $(DEVKITPRO_LDFLAGS)
+AM_CXXFLAGS = -Wall -Wextra -Werror
 
-LIBS = 	$(top_builddir)/external/libwupsxx/src/libwupsxx.a \
-	$(DEVKITPRO_LIBS)
+LDADD = $(top_builddir)/external/libwupsxx/src/libwupsxx.a
 
 
 WPS_FILE = network-switcher.wps
@@ -31,12 +25,14 @@ noinst_PROGRAMS = network-switcher.elf
 
 
 network_switcher_elf_SOURCES = \
-	src/main.cpp \
-	src/notify.cpp src/notify.hpp \
-	src/wut_extras.cpp src/wut_extras.hpp
+	src/main.cpp
 
 
 all-local: $(WPS_FILE)
+
+.PHONY: run
+run: $(WPS_FILE)
+	WIILOAD=tcp:wiiu wiiload $<
 
 
 install-exec-local: all

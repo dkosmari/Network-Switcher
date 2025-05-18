@@ -24,9 +24,8 @@
 #include <wupsxx/init.hpp>
 #include <wupsxx/int_item.hpp>
 #include <wupsxx/logger.hpp>
+#include <wupsxx/notify.hpp>
 
-#include "notify.hpp"
-#include "wut_extras.hpp"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -36,6 +35,7 @@
 using std::runtime_error;
 
 namespace logger = wups::logger;
+namespace notify = wups::notify;
 
 
 WUPS_PLUGIN_NAME(PACKAGE_NAME);
@@ -43,10 +43,6 @@ WUPS_PLUGIN_VERSION(PACKAGE_VERSION);
 WUPS_PLUGIN_DESCRIPTION("Switch between network profiles.");
 WUPS_PLUGIN_AUTHOR("Daniel K. O.");
 WUPS_PLUGIN_LICENSE("GPLv3");
-
-
-int startup_id = 0;
-int compat_id = 0;
 
 
 struct nn_ac_guard {
@@ -74,7 +70,7 @@ get_ssid(const NetConfWifiConfigData& cfg)
 }
 
 
-struct net_profile_item : wups::config::button_item {
+struct net_profile_item : wups::button_item {
 
     const nn::ac::ConfigIdNum id;
     std::string description;
@@ -100,9 +96,9 @@ struct net_profile_item : wups::config::button_item {
                 return;
             }
 
-            if (cfg.wl0.if_sate)
+            if (cfg.wl0.if_state)
                 description = "[Wi-Fi] SSID=\"" + get_ssid(cfg.wifi.config) + "\"";
-            else if (cfg.eth0.if_sate)
+            else if (cfg.eth0.if_state)
                 description = "[Ethernet]";
 
             status_msg = description;
@@ -174,12 +170,12 @@ struct net_profile_item : wups::config::button_item {
         try {
             task_result.get();
             status_msg = "Done! " + description;
-            notify::infof("Using profile %u: %s",
-                          static_cast<unsigned>(id),
-                          description.c_str());
+            notify::info::show("Using profile %u: %s",
+                               static_cast<unsigned>(id),
+                               description.c_str());
         }
         catch (std::exception& e) {
-            notify::errorf("Error: %s", e.what());
+            notify::error::show("Error: %s", e.what());
             logger::printf("Error: %s\n", e.what());
             status_msg = e.what();
         }
@@ -188,7 +184,7 @@ struct net_profile_item : wups::config::button_item {
 };
 
 
-struct disconnect_item : wups::config::button_item {
+struct disconnect_item : wups::button_item {
 
     disconnect_item() :
         button_item{"Disconnect"}
@@ -221,13 +217,23 @@ struct disconnect_item : wups::config::button_item {
 };
 
 
-void
-menu_open(wups::config::category& root)
-{
-    using wups::config::int_item;
+namespace cfg {
 
-    logger::initialize(PACKAGE_NAME);
-    notify::initialize(PACKAGE_NAME);
+    WUPSXX_OPTION("Default profile",
+                  int, startup_id, 1, 1, 6);
+
+    WUPSXX_OPTION("vWii profile",
+                  int, compat_id, 1, 1, 6);
+
+} // namespace cfg
+
+
+void
+menu_open(wups::category& root)
+{
+    using wups::make_item;
+
+    logger::initialize();
 
     nn_ac_guard guard;
 
@@ -236,19 +242,13 @@ menu_open(wups::config::category& root)
 
     nn::ac::ConfigIdNum sid = 0;
     if (nn::ac::GetStartupId(&sid))
-        startup_id = sid;
-    root.add(int_item::create("Default profile",
-                              startup_id,
-                              startup_id,
-                              1, 6));
+        cfg::startup_id.value = sid;
+    root.add(make_item(cfg::startup_id));
 
     nn::ac::ConfigIdNum cid = 0;
     if (nn::ac::GetCompatId(&cid))
-        compat_id = cid;
-    root.add(int_item::create("vWii profile",
-                              compat_id,
-                              compat_id,
-                              1, 6));
+        cfg::compat_id.value = cid;
+    root.add(make_item(cfg::compat_id));
 
     root.add(disconnect_item::create());
 }
@@ -260,38 +260,53 @@ menu_close()
     nn_ac_guard guard;
 
     nn::ac::ConfigIdNum sid = 0;
-    if (nn::ac::GetStartupId(&sid) && static_cast<int>(sid) != startup_id) {
-        if (nn::ac::SetStartupId(startup_id)) {
-            notify::infof("Set default profile to %d", startup_id);
+    if (nn::ac::GetStartupId(&sid) && static_cast<int>(sid)
+        != cfg::startup_id.value) {
+        if (nn::ac::SetStartupId(cfg::startup_id.value)) {
+            notify::info::show("Set default profile to %d",
+                               cfg::startup_id.value);
         } else {
-            notify::errorf("Could not set default profile to %d", startup_id);
-            logger::printf("nn::ac::SetStartupId(%d) failed\n", startup_id);
+            notify::error::show("Could not set default profile to %d",
+                                cfg::startup_id.value);
+            logger::printf("nn::ac::SetStartupId(%d) failed\n",
+                           cfg::startup_id.value);
         }
     }
 
     nn::ac::ConfigIdNum cid = 0;
-    if (nn::ac::GetCompatId(&cid) && static_cast<int>(cid) != compat_id) {
-        if (nn::ac::SetCompatId(compat_id)) {
-            notify::infof("Set vWii profile to %d", compat_id);
+    if (nn::ac::GetCompatId(&cid) && static_cast<int>(cid)
+        != cfg::compat_id.value) {
+        if (nn::ac::SetCompatId(cfg::compat_id.value)) {
+            notify::info::show("Set vWii profile to %d",
+                               cfg::compat_id.value);
         } else {
-            notify::errorf("Could not set vWii profile to %d", compat_id);
-            logger::printf("nn::ac::SetCompatId(%d) failed\n", compat_id);
+            notify::error::show("Could not set vWii profile to %d",
+                                cfg::compat_id.value);
+            logger::printf("nn::ac::SetCompatId(%d) failed\n",
+                           cfg::compat_id.value);
         }
     }
 
-    notify::finalize();
     logger::finalize();
 }
 
 
 INITIALIZE_PLUGIN()
 {
-    logger::guard guard{PACKAGE_NAME};
+    logger::set_prefix(PACKAGE_NAME);
+    logger::guard guard;
+    notify::initialize(PACKAGE_NAME);
 
     try {
-        wups::config::init(PACKAGE_NAME, menu_open, menu_close);
+        wups::init(PACKAGE_NAME, menu_open, menu_close);
     }
     catch (std::exception& e) {
         logger::printf("ERROR: %s\n", e.what());
     }
+}
+
+
+DEINITIALIZE_PLUGIN()
+{
+    notify::finalize();
 }
