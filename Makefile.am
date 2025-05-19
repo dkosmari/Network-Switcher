@@ -11,12 +11,14 @@ EXTRA_DIST = \
 SUBDIRS = external/libwupsxx
 
 
-AM_CPPFLAGS = -I$(top_srcdir)/external/libwupsxx/include
+AM_CPPFLAGS = -I$(srcdir)/external/libwupsxx/include
 
 
 AM_CXXFLAGS = -Wall -Wextra -Werror
 
-LDADD = $(top_builddir)/external/libwupsxx/src/libwupsxx.a
+LDADD = \
+	external/libwupsxx/src/libwupsxx.a \
+	-lnotifications
 
 
 WPS_FILE = network-switcher.wps
