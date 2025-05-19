@@ -8,7 +8,7 @@
 # any medium without royalty provided the copyright notice and this notice are
 # preserved. This file is offered as-is, without any warranty.
 
-#serial 7
+#serial 8
 
 # WIIU_WUMS_INIT
 # --------------
@@ -151,12 +151,13 @@ AC_DEFUN([WIIU_WUMS_CHECK_LIBMAPPEDMEMORY],[
 
     AC_REQUIRE([WIIU_WUMS_SETUP])
 
+    AX_PREPEND_FLAG([-T$WIIU_WUMS/share/libmappedmemory.ld], [LDFLAGS])
+
     AX_CHECK_LIBRARY([WIIU_WUMS_LIBMAPPEDMEMORY],
                             [memory/mappedmemory.h],
                             [mappedmemory],
-                            [-T$WIIU_WUMS_ROOT/share/libmappedmemory.ld],
                             [
-                                AX_PREPEND_FLAG([-lmappedmemroy], [LIBS])
+                                AX_PREPEND_FLAG([-lmappedmemory], [LIBS])
                                 $1
                             ],
                             m4_default([$2],
@@ -186,7 +187,7 @@ AC_DEFUN([WIIU_WUMS_CHECK_LIBNOTIFICATIONS],[
                          $1
                      ],
                      m4_default([$2],
-                                [AC_MSG_ERROR([libnotifications not found in $WIIU_WUMS_ROOT; get it from https://github.com/wiiu-env/libnotifications])]))
+                                [AC_MSG_ERROR([libnotifications not found; get it from https://github.com/wiiu-env/libnotifications])]))
 
 ])dnl WIIU_WUMS_CHECK_LIBNOTIFICATIONS
 
