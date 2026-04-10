@@ -12,6 +12,10 @@ EXTRA_DIST = \
 SUBDIRS = external/libwupsxx
 
 
+external/libwupsxx/lib/libwupsxx.la:
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C external/libwupsxx V=$V
+
+
 AM_CPPFLAGS = \
 	$(WUPS_CPPFLAGS) \
 	$(LIBNOTIFICATIONS_CPPFLAGS) \
