@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.71])
 AC_INIT([Network Switcher],
         [1.1+],
         [https://github.com/dkosmari/Network-Switcher/issues],
@@ -12,21 +12,26 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
-WIIU_WUPS_INIT
-WIIU_WUMS_INIT
+AC_CANONICAL_HOST
 
-AM_INIT_AUTOMAKE([foreign subdir-objects])
+DEVKITPRO_WUT_INIT
+
+AM_INIT_AUTOMAKE([foreign subdir-objects tar-pax])
+
+LT_INIT([disable-shared])
 
 AC_PROG_CXX
-AX_APPEND_COMPILE_FLAGS([-std=c++23], [CXX])
 AC_LANG([C++])
+AX_APPEND_COMPILE_FLAGS([-std=c++23], [CXX])
 
-WIIU_WUPS_SETUP
-WIIU_WUMS_SETUP
-WIIU_WUMS_CHECK_LIBNOTIFICATIONS
+DEVKITPRO_WUT_SETUP
+
+WIIU_ENV_SETUP_LIBNOTIFICATIONS([external/libwupsxx/external/libnotifications])
+WIIU_ENV_SETUP_WUPS([external/libwupsxx/external/WiiUPluginSystem])
+
+AX_SUBDIRS_CONFIGURE([external/libwupsxx],
+                     [[--enable-notify],
+                      [--disable-shortcuts]])
 
 AC_CONFIG_FILES([Makefile])
-
-AX_SUBDIRS_CONFIGURE([external/libwupsxx], [[--enable-notify]])
-
 AC_OUTPUT

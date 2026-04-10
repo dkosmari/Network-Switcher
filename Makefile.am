@@ -5,54 +5,62 @@ EXTRA_DIST = \
 	COPYING \
 	docker-build.sh \
 	Dockerfile \
+	external/update-submodules.sh \
 	README.md
 
 
 SUBDIRS = external/libwupsxx
 
 
-AM_CPPFLAGS = -I$(srcdir)/external/libwupsxx/include
-
+AM_CPPFLAGS = \
+	$(WUPS_CPPFLAGS) \
+	$(LIBNOTIFICATIONS_CPPFLAGS) \
+	-I$(srcdir)/external/libwupsxx/include
 
 AM_CXXFLAGS = -Wall -Wextra -Werror
 
+AM_LDFLAGS = $(WUPS_LDFLAGS)
+
 LDADD = \
-	external/libwupsxx/src/libwupsxx.a \
-	-lnotifications
+	external/libwupsxx/lib/libwupsxx.la \
+	$(LIBNOTIFICATIONS_LIB) \
+	$(WUPS_LIB)
 
 
-WPS_FILE = network-switcher.wps
+ELF_FILE := network-switcher.elf
+WPS_FILE := $(ELF_FILE:.elf=.wps)
 
-noinst_PROGRAMS = network-switcher.elf
+noinst_PROGRAMS = $(ELF_FILE)
 
 
-network_switcher_elf_SOURCES = \
-	src/main.cpp
+network_switcher_elf_SOURCES = src/main.cpp
 
 
 all-local: $(WPS_FILE)
 
-.PHONY: run
+
+.PHONY: run wiiu-install wiiu-uninstall company
+
+
 run: $(WPS_FILE)
 	WIILOAD=tcp:wiiu wiiload $<
 
 
-install-exec-local: all
-	curl --upload-file $(WPS_FILE) "ftp://wiiu:/fs/vol/external01/wiiu/environments/aroma/plugins/"
+wiiu-install: all
+	curl "ftp://wiiu:/fs/vol/external01/wiiu/environments/aroma/plugins/" --upload-file $<
 
-uninstall-local:
+wiiu-uninstall:
 	curl "ftp://wiiu" --quote "DELE /fs/vol/external01/wiiu/environments/aroma/plugins/$(WPS_FILE)"
 
 
-@INC_AMINCLUDE@
+company: compile_flags.txt
+
+compile_flags.txt: Makefile
+	printf "%s" "$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS)" | xargs -n1 | sort -u > compile_flags.txt
+	$(CPP) -xc++ /dev/null -E -Wp,-v 2>&1 | sed -n 's,^ ,-I,p' >> compile_flags.txt
+
 
 CLEANFILES = $(WPS_FILE)
 DISTCLEANFILES = $(AMINCLUDE)
 
-
-.PHONY: company
-company: compile_flags.txt
-
-compile_flags.txt: Makefile
-	printf "%s" "$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS)" | xargs -n1 | sort -u > $(srcdir)/compile_flags.txt
-	$(CPP) -xc++ /dev/null -E -Wp,-v 2>&1 | sed -n 's,^ ,-I,p' >> $(srcdir)/compile_flags.txt
+@INC_AMINCLUDE@

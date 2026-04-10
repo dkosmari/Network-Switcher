@@ -23,30 +23,32 @@ In addition, you can also change:
 
 ## Build instructions
 
-Dependencies:
+### Dependencies:
 
   - devkitPPC
 
   - wut
 
-  - [Wii U Plugin System](https://github.com/wiiu-env/WiiUPluginSystem)
+### Steps:
 
-  - [libnotifications](https://github.com/wiiu-env/libnotifications)
+If you obtained the source from a repository clone with git, make sure to use the
+`--recurse-submodules` option. You can also run the `external/update-submodules.sh` script
+to manually update them.
 
-Steps:
+If you obtained the source from a release tarball, you can skip step 0.
 
-  0. (Skip if you got the source code from a `.tar.gz` release) `./bootstrap`
+0. `./bootstrap`
 
-  1. `./configure --host=powerpc-eabi CXXFLAGS="-Os -ffunction-sections -fipa-pta"`
+1. `./configure --host=powerpc-eabi CXXFLAGS="-Os -ffunction-sections -fdata-sections -fipa-pta"`
 
-  2. `make`
+2. `make`
 
-  3. (Optional) If the Wii U is named `wiiu` in the network:
+3. (Optional) If the Wii U is named `wiiu` in the network:
 
        - `make run` if the [wiiload plugin](https://github.com/wiiu-env/ftpiiu_plugin) is
          enabled.
 
-       - `make install` or `make uninstall` if the [ftpiiu
+       - `make wiiu-install` or `make wiiu-uninstall` if the [ftpiiu
          plugin](https://github.com/wiiu-env/ftpiiu_plugin) is enabled.
 
 
