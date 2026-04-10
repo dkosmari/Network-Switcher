@@ -46,7 +46,7 @@ run: $(WPS_FILE)
 	WIILOAD=tcp:wiiu wiiload $<
 
 
-wiiu-install: all
+wiiu-install: $(WPS_FILE)
 	curl "ftp://wiiu:/fs/vol/external01/wiiu/environments/aroma/plugins/" --upload-file $<
 
 wiiu-uninstall:
