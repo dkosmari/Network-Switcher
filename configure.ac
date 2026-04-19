@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.71])
 AC_INIT([Network Switcher],
-        [1.1+],
+        [1.2],
         [https://github.com/dkosmari/Network-Switcher/issues],
         [network-switcher],
         [https://github.com/dkosmari/Network-Switcher])
